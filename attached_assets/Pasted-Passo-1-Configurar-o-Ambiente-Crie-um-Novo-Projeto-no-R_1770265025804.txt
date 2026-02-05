@@ -1,0 +1,89 @@
+Passo 1: Configurar o Ambiente
+Crie um Novo Projeto no Replit:
+Vá para Replit e faça login.
+Clique em "Create" e selecione "Python" como a linguagem.
+Passo 2: Instalar Dependências
+Instale as Bibliotecas Necessárias:
+No terminal do Replit, execute os seguintes comandos para instalar as bibliotecas necessárias:
+bash
+
+Copiar
+pip install flask
+pip install transformers
+pip install torch
+Passo 3: Estruturar o Projeto
+Crie a Estrutura de Pastas e Arquivos:
+Crie uma pasta chamada app dentro do seu projeto.
+Dentro da pasta app, crie dois arquivos: main.py e model.py.
+Passo 4: Implementar a Lógica
+Implemente o Código no main.py:
+
+python
+
+Copiar
+from flask import Flask, request, jsonify
+from app.model import process_input
+
+app = Flask(__name__)
+
+@app.route('/process', methods=['POST'])
+def process():
+    data = request.json
+    user_input = data.get('input', '')
+    response = process_input(user_input)
+    return jsonify({'output': response})
+
+if __name__ == '__main__':
+    app.run(debug=True)
+Implemente a Lógica de Processamento no model.py:
+
+python
+
+Copiar
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+# Carregue o modelo e o tokenizador
+model_name = "your-model-name"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(model_name)
+
+def process_input(user_input):
+    inputs = tokenizer(user_input, return_tensors="pt")
+    outputs = model.generate(**inputs)
+    response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    return response
+Passo 5: Configurar o Replit
+Configure o Arquivo replit.nix:
+No arquivo replit.nix, adicione as dependências necessárias:
+nix
+
+Copiar
+{ pkgs }:
+pkgs.mkShell {
+  buildInputs = [
+    pkgs.python3Full
+    pkgs.python3Packages.flask
+    pkgs.python3Packages.transformers
+    pkgs.python3Packages.torch
+  ];
+}
+Passo 6: Executar o Projeto
+Execute o Projeto:
+No terminal do Replit, execute:
+bash
+
+Copiar
+python app/main.py
+Passo 7: Testar a API
+Teste a API:
+Use uma ferramenta como Postman ou cURL para enviar solicitações POST para http://localhost:5000/process com um JSON como:
+json
+
+Copiar
+{
+  "input": "Seu texto de entrada aqui"
+}
+Passo 8: Ajustes Finais
+Ajuste e Otimize:
+Dependendo do modelo e das necessidades, você pode precisar ajustar os parâmetros e otimizar o desempenho.
+Este guia cobre os passos básicos para clonar a funcionalidade da LÛMENIA no Replit. Certifique-se de substituir "your-model-name" pelo nome real do modelo que deseja usar.
