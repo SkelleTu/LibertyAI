@@ -6,6 +6,7 @@ import { useConversation, useSendMessage } from "@/hooks/use-chat";
 import { CyberButton } from "@/components/CyberButton";
 import { Send, Menu, Loader2 } from "lucide-react";
 import TextareaAutosize from "react-textarea-autosize";
+import { cn } from "@/lib/utils";
 
 export default function ChatPage() {
   const [match, params] = useRoute("/chat/:id");
