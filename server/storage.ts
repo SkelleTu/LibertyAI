@@ -7,10 +7,13 @@ import {
   type Message,
   type Settings,
   type CreateConversationRequest,
-  type InsertMessage,
+  insertMessageSchema,
   type UpdateSettingsRequest,
 } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
+import { z } from "zod";
+
+type InsertMessage = z.infer<typeof insertMessageSchema>;
 
 export interface IStorage {
   // Conversations
