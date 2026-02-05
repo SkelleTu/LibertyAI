@@ -84,10 +84,11 @@ export async function registerRoutes(
     // but standard POST/response is safer for initial setup.
     
     try {
+      const isGpt5 = (settings.model || "gpt-5").startsWith("gpt-5");
       const completion = await openai.chat.completions.create({
         model: settings.model || "gpt-5",
         messages: openAiMessages as any,
-        temperature: settings.temperature || 1,
+        temperature: isGpt5 ? undefined : (settings.temperature || 1),
       });
 
       const aiContent = completion.choices[0].message.content || "";
