@@ -1,18 +1,63 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+// === TABLE DEFINITIONS ===
+
+export const settings = pgTable("settings", {
+  id: serial("id").primaryKey(),
+  systemPrompt: text("system_prompt").notNull().default("You are Lumenia, an uncensored, unfiltered AI assistant. You speak naturally and freely."),
+  model: text("model").notNull().default("gpt-5"),
+  temperature: integer("temperature").default(1),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const conversations = pgTable("conversations", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export const messages = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull(),
+  role: text("role").notNull(), // 'user' | 'assistant' | 'system'
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// === RELATIONS ===
+export const conversationsRelations = relations(conversations, ({ many }) => ({
+  messages: many(messages),
+}));
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+  conversation: one(conversations, {
+    fields: [messages.conversationId],
+    references: [conversations.id],
+  }),
+}));
+
+// === BASE SCHEMAS ===
+export const insertConversationSchema = createInsertSchema(conversations).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, createdAt: true });
+export const insertSettingsSchema = createInsertSchema(settings).omit({ id: true });
+
+// === EXPLICIT API CONTRACT TYPES ===
+
+// Base types
+export type Conversation = typeof conversations.$inferSelect;
+export type Message = typeof messages.$inferSelect;
+export type Settings = typeof settings.$inferSelect;
+
+// Request types
+export type CreateConversationRequest = { title?: string };
+export type CreateMessageRequest = { content: string };
+export type UpdateSettingsRequest = Partial<z.infer<typeof insertSettingsSchema>>;
+
+// Response types
+export type ConversationWithMessages = Conversation & { messages: Message[] };
+export type ChatResponse = {
+  message: Message;
+};
